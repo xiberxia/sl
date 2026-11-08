@@ -55,6 +55,7 @@ int ACCIDENT  = 0;
 int LOGO      = 0;
 int FLY       = 0;
 int C51       = 0;
+int P_CAR     = 0;
 
 int my_mvaddstr(int y, int x, char *str)
 {
@@ -67,7 +68,7 @@ int my_mvaddstr(int y, int x, char *str)
 
 void option(char *str)
 {
-    extern int ACCIDENT, LOGO, FLY, C51;
+    extern int ACCIDENT, LOGO, FLY, C51, P_CAR;
 
     while (*str != '\0') {
         switch (*str++) {
@@ -75,6 +76,7 @@ void option(char *str)
             case 'F': FLY      = 1; break;
             case 'l': LOGO     = 1; break;
             case 'c': C51      = 1; break;
+            case 'p': P_CAR    = 1; LOGO = 1; break;
             default:                break;
         }
     }
@@ -111,6 +113,8 @@ int main(int argc, char *argv[])
         refresh();
         usleep(40000);
     }
+    erase();
+    refresh();
     mvcur(0, COLS - 1, LINES - 1, 0);
     endwin();
 
@@ -133,22 +137,38 @@ int add_sl(int x)
 
     static char *car[LOGOHEIGHT + 1]
         = {LCAR1, LCAR2, LCAR3, LCAR4, LCAR5, LCAR6, DELLN};
+    static char *p_car[LOGOHEIGHT + 4]
+        = {"+-------------------+ ",
+           "|       ____        | ",
+           "|      |  _ \\       | ",
+           "|      | |_) |      | ",
+           "|      |  __/       | ",
+           "|      |_|          | ",
+           "|                   | ",
+           "+-------------------+ ",
+           "   (O)       (O)    ",
+           "                      "};
 
-    int i, y, py1 = 0, py2 = 0, py3 = 0;
+    int i, y, pattern, py1 = 0, py2 = 0, py3 = 0;
 
-    if (x < - LOGOLENGTH)  return ERR;
+    if (x < - (LOGOLENGTH + (P_CAR ? 21 : 0)))  return ERR;
     y = LINES / 2 - 3;
+    pattern = ((LOGOLENGTH + x) / 3) % LOGOPATTERNS;
+    if (pattern < 0) pattern += LOGOPATTERNS;
 
     if (FLY == 1) {
         y = (x / 6) + LINES - (COLS / 6) - LOGOHEIGHT;
         py1 = 2;  py2 = 4;  py3 = 6;
     }
     for (i = 0; i <= LOGOHEIGHT; ++i) {
-        my_mvaddstr(y + i, x, sl[(LOGOLENGTH + x) / 3 % LOGOPATTERNS][i]);
+        my_mvaddstr(y + i, x, sl[pattern][i]);
         my_mvaddstr(y + i + py1, x + 21, coal[i]);
         my_mvaddstr(y + i + py2, x + 42, car[i]);
         my_mvaddstr(y + i + py3, x + 63, car[i]);
     }
+    if (P_CAR == 1)
+        for (i = 0; i <= LOGOHEIGHT + 3; ++i)
+            my_mvaddstr(y + i + py3 - 3, x + 84, p_car[i]);
     if (ACCIDENT == 1) {
         add_man(y + 1, x + 14);
         add_man(y + 1 + py2, x + 45);  add_man(y + 1 + py2, x + 53);
